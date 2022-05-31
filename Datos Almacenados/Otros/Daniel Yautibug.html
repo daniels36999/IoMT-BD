@@ -1,0 +1,76 @@
+
+            <!doctype html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport"
+                      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                
+                <title>HISTORIAL IoMT</title>
+
+                <!-- LIBRERIAS -->
+                <script src="https://unpkg.com/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
+                <script src="https://unpkg.com/file-saverjs@latest/FileSaver.min.js"></script>
+                <script src="https://unpkg.com/tableexport@latest/dist/js/tableexport.min.js"></script>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+            </head>
+
+            <body>
+            <br><br>
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        REPORTE IOMT
+                    </div>
+                    <div class="card-body">
+                        <button id="btnExportar" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> DESCARGAR HISTORIAL
+                        </button>
+
+                        <table id="tabla" class="table table-border table-hover">
+                            <thead>
+                            <tr><th>Nombre:</th><th>Daniel</th></tr>				
+                            <tr><th>Apellido:</th><th>Yautibug</th></tr>
+                            <tr><th>Cedula:</th><th>1123313</th></tr>
+                            <tr><th>Curso:</th><th>Otros</th></tr>
+                            <tr><th></th><th></th></tr>				
+                            
+                            <tr><th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Temperatura</th>
+                                <th>Peso</th>
+                                <th>Altura</th>
+                                <th>IMC</th>
+                                <th>O2Sat</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                        <!-- AGREGAR TABLA-->
+                            
+                            
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                <!-- SCRIPT PARA EXPORTAR -->
+                <script>
+                    const $btnExportar = document.querySelector("#btnExportar"),
+                        $tabla = document.querySelector("#tabla");
+                    $btnExportar.addEventListener("click", function() {
+                        let tableExport = new TableExport($tabla, {
+                            exportButtons: false, // No queremos botones
+                            filename: "Reporte de prueba", //Nombre del archivo de Excel
+                            sheetname: "Reporte de prueba", //Título de la hoja
+                        });
+                        let datos = tableExport.getExportData();
+                        let preferenciasDocumento = datos.tabla.xlsx;
+                        tableExport.export2file(preferenciasDocumento.data, preferenciasDocumento.mimeType, preferenciasDocumento.filename, preferenciasDocumento.fileExtension, preferenciasDocumento.merges, preferenciasDocumento.RTL, preferenciasDocumento.sheetname);
+                    });
+                </script>
+            </body>
+            </html>
+            

@@ -1,8 +1,0 @@
-from git import Repo
-repo = Repo('/home/pi/GitHub-IoMT/IoMT-BD')  
-repo.index.add(['/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados'])
-repo.index.commit('actualizando')
-origin = repo.remote('origin')
-origin.push()
-print("actualizado el git")
-print("segunda actualización")

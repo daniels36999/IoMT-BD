@@ -17,21 +17,63 @@ from openpyxl.chart import Reference,  LineChart
 from git import Repo
 import PIL.Image
 import PIL.ImageTk
+import paho.mqtt.client as mqtt
 
 # formato = '%c'
 # ahora = time.strftime(formato)
-ahora=datetime.datetime.now()
-ahora1=ahora.strftime("%d/%m/%y")
-ahora2=ahora.strftime("%Hh/%Mm/%Ss")
 
-fechaActual= datetime.datetime.now()
+# fechaActual= datetime.datetime.now()
 
 
 
 
+dato8 = 0
+dato9 = 0
 
+def inicio():
+    contador=0
+    serialArduino = serial.Serial('/dev/ttyACM0',9600)
+    while True:
+        
+        
+        cad=serialArduino.readline().decode('ascii')
+        datoss=cad.splitlines()
+        d0=str(datoss[0])
+        d1=d0.replace("b","")
+        d2=d1.replace("'","")
+        d3=d2.split(",")
+        dato1=str(d3[0])
+        dato2=str(d3[1])
+        dato3=str(d3[2])
+        dato4=str(d3[3])
+        dato5=str(d3[4])
+                    
+        dato9=float(dato3)
+        if(dato9<1):
+            dato9=1
+                        
+        dato6=float(dato2)/(float(dato9)*float(dato9))
+        dato7=round(dato6,2)
+        dato8=str(dato7)
+                    
+        print(dato1,dato2,dato3,dato8,dato5)
+        print("--------------------")
+        print(contador)
+        print("--------------------")
+        client = mqtt.Client()
+        client.connect("test.mosquitto.org",1883,60)
+        client.publish("Cabina/IoMT/Datos", str(dato1)+';'+str(dato2)+';'+str(dato3)+';'+str(dato5)+';'+str(dato5));
+        client.disconnect();
+        contador=contador+1
+        time.sleep(0.5)
+        if contador>= 15:
+            messagebox.showinfo('IoMT','IoMT realizado exitosamente')
+            serialArduino.close()
+            break
 
 def ventanaregis():
+
+
     
     ventana.withdraw()
     ventana2 = tkinter.Toplevel()
@@ -173,7 +215,87 @@ def ventanaregis():
             archivo = open ('/home/pi/DispositivoFinalIoMT/Todos los Datos/'+ personName +'.csv','a')
             archivo.write('Nombre '+ ','+ personName + '\n' + 'Cedula' + ',' + cedula +'\n'+ 'Curso' + ',' + curso +'\n')
             archivo.close()
-            
+#########################################################################################            
+            archivo1 = open ('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+curso+'/'+ personName +'.html','a')
+            archivo1.write(
+            """
+            <!doctype html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport"
+                      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+                <meta http-equiv="X-UA-Compatible" content="ie=edge">
+                
+                <title>HISTORIAL IoMT</title>
+
+                <!-- LIBRERIAS -->
+                <script src="https://unpkg.com/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
+                <script src="https://unpkg.com/file-saverjs@latest/FileSaver.min.js"></script>
+                <script src="https://unpkg.com/tableexport@latest/dist/js/tableexport.min.js"></script>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+
+            </head>
+
+            <body>
+            <br><br>
+            <div class="container">
+                <div class="card">
+                    <div class="card-header">
+                        REPORTE IOMT
+                    </div>
+                    <div class="card-body">
+                        <button id="btnExportar" class="btn btn-success">
+                            <i class="fas fa-file-excel"></i> DESCARGAR HISTORIAL
+                        </button>
+
+                        <table id="tabla" class="table table-border table-hover">
+                            <thead>
+                            <tr><th>Nombre:</th><th>"""+nombre+"""</th></tr>				
+                            <tr><th>Apellido:</th><th>"""+apellido+"""</th></tr>
+                            <tr><th>Cedula:</th><th>"""+cedula+"""</th></tr>
+                            <tr><th>Curso:</th><th>"""+curso+"""</th></tr>
+                            <tr><th></th><th></th></tr>				
+                            
+                            <tr><th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Temperatura</th>
+                                <th>Peso</th>
+                                <th>Altura</th>
+                                <th>IMC</th>
+                                <th>O2Sat</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                        <!-- AGREGAR TABLA-->
+                            
+                            
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+                <!-- SCRIPT PARA EXPORTAR -->
+                <script>
+                    const $btnExportar = document.querySelector("#btnExportar"),
+                        $tabla = document.querySelector("#tabla");
+                    $btnExportar.addEventListener("click", function() {
+                        let tableExport = new TableExport($tabla, {
+                            exportButtons: false, // No queremos botones
+                            filename: "Reporte de prueba", //Nombre del archivo de Excel
+                            sheetname: "Reporte de prueba", //Título de la hoja
+                        });
+                        let datos = tableExport.getExportData();
+                        let preferenciasDocumento = datos.tabla.xlsx;
+                        tableExport.export2file(preferenciasDocumento.data, preferenciasDocumento.mimeType, preferenciasDocumento.filename, preferenciasDocumento.fileExtension, preferenciasDocumento.merges, preferenciasDocumento.RTL, preferenciasDocumento.sheetname);
+                    });
+                </script>
+            </body>
+            </html>
+            """)
+            archivo1.close()
+                        
 #########################################################################################
             wb = openpyxl.Workbook()
             ws=wb.active
@@ -185,7 +307,7 @@ def ventanaregis():
             ws.append(temp2)
             ws.append(temp3)
             ws.append(temp5)
-            wb.save('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+curso+'/'+personName+".xlsx")
+            wb.save('/home/pi/DispositivoFinalIoMT/DatosExcel/'+personName+".xlsx")
      
             mensajeregistro()
             
@@ -216,8 +338,10 @@ def actualizargithub():
     origin.push()
     
 def reconocimientof():
+    
   
-
+    serialArduino = serial.Serial('/dev/ttyACM0',9600)
+    
     dataPath = '/home/pi/DispositivoFinalIoMT/Data' #Cambia a la ruta donde hayas almacenado Data
     imagePaths = os.listdir(dataPath)
     print('imagePaths=',imagePaths)
@@ -286,13 +410,21 @@ def reconocimientof():
     a = str(df.iat[2,1])
     print(a)
     
-    serialArduino = serial.Serial('/dev/ttyACM0',9600)
+#     serialArduino = serial.Serial('/dev/ttyACM0',9600)
     cont1=0
     cont2=0
+    
+#    serialArduino = serial.Serial('/dev/ttyACM0',9600)
+    
     while True :
+#         cad=serialArduino.readline().decode('ascii')
+        
+#         serialArduino = serial.Serial('/dev/ttyACM0',9600)
         cad=serialArduino.readline().decode('ascii')
         if(cont1>=10):
-
+            
+            
+            cad=serialArduino.readline().decode('ascii')
             datoss=cad.splitlines()
             d0=str(datoss[0])
             d1=d0.replace("b","")
@@ -303,33 +435,59 @@ def reconocimientof():
             dato3=str(d3[2])
             dato4=str(d3[3])
             dato5=str(d3[4])
-            print(dato1,dato2,dato3,dato4,dato5)
+            
+            dato9=float(dato3)
+            if(dato9<1):
+                dato9=1
+                
+            dato6=float(dato2)/(float(dato9)*float(dato9))
+            dato7=round(dato6,2)
+            dato8=str(dato7)
+            
+            print(dato1,dato2,dato3,dato8,dato5)
             print("--------------------")
             cont1=cont1+1
-#             
-#             if(dato3<=0):
-#                 dato3=1
+            ahora=datetime.datetime.now()
+            ahora1=ahora.strftime("%d/%m/%y")
+            ahora2=ahora.strftime("%Hh/%Mm/%Ss")
+            client = mqtt.Client()
+            client.connect("test.mosquitto.org",1883,60)
+            client.publish("Cabina/IoMT/Datos", str(dato1)+';'+str(dato2)+';'+str(dato3)+';'+str(dato5)+';'+str(dato5));
+            client.disconnect();
             
+ 
         if(cont2==20):
-            dato6=float(dato2)/(float(dato3)*float(dato3))
-            dato7=round(dato6,2)
-            dato7=2
-#             archivo = open ('/home/pi/Desktop/Datos Almacenados/'+a+'/'+nombreparallenar+'.xlsx','a')
-#             archivo.write(ahora +  ','+ dato1 +  ','+ dato2 +  ','+ dato3 +  ','+ str(dato7) +  ','+ dato5 +  '\n')
-#             archivo.close()
-            wb2=openpyxl.load_workbook('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+a+'/'+nombreparallenar+'.xlsx')
-            ws=wb2.active
-            temp=([ahora1, ahora2, dato1,dato2,dato3,str(dato7),dato5])
-            ws.append(temp)
-            wb2.save('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+a+'/'+nombreparallenar+'.xlsx')
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+######################################################################################################
+            with open('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+a+'/'+nombreparallenar+'.html',"r") as f:
+                newline=[]
+                for word in f.readlines():        
+                    newline.append(word.replace("<!-- AGREGAR TABLA-->","""<tr><td>"""+ahora1+"""</td><td>"""+ahora2+"""</td><td>"""+dato1+"""</td><td>"""+dato2+"""</td><td>"""+dato3+"""</td><td>"""+str(dato8)+"""</td><td>"""+dato5+"""</td></tr>
+                            <!-- AGREGAR TABLA-->"""))  ## Replace the keyword while you copy.  
 
-            serialArduino.close()
+            with open('/home/pi/GitHub-IoMT/IoMT-BD/Datos Almacenados/'+a+'/'+nombreparallenar+'.html',"w") as f:
+                for line in newline:
+                    f.writelines(line)
+                f.close()
+            
+
+######################################################################################################
+            wb2=openpyxl.load_workbook('/home/pi/DispositivoFinalIoMT/DatosExcel/'+nombreparallenar+'.xlsx')
+            ws=wb2.active
+            temp=([ahora1, ahora2, dato1,dato2,dato3,str(dato8),dato5])
+            ws.append(temp)
+            wb2.save('/home/pi/DispositivoFinalIoMT/DatosExcel/'+nombreparallenar+'.xlsx')
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+            client = mqtt.Client()
+            client.connect("test.mosquitto.org",1883,60)
+            client.publish("Cabina/IoMT/Datos", str(dato1)+';'+str(dato2)+';'+str(dato3)+';'+str(dato8)+';'+str(dato5));
+            client.disconnect();
+#            serialArduino.close()
+    
             cont1=0
             cont2=0
             
             actualizargithub()
-            
+#             serialArduino.close()
             break
 
         cont1=cont1+1
@@ -346,6 +504,13 @@ def reconocimientof():
 
     
     messagebox.showinfo('Datos','Datos Almacenados Correctamente')
+    client = mqtt.Client()
+    client.connect("test.mosquitto.org",1883,60)
+    client.publish("Cabina/IoMT/Datos", str("00:00")+';'+str("00:00")+';'+str("00:00")+';'+str("00:00")+';'+str("00:00"));
+    client.disconnect();
+    
+#     serialArduino.close()
+
 #     ventana3.withdraw()
 #     botonsalir = tkinter.Button(ventana, text = 'Autentificacion', command = reconocimientof)
     ventana.deiconify() 
@@ -365,7 +530,7 @@ photo1 = PIL.ImageTk.PhotoImage(im1)
 label = Label(ventana, image=photo).place(x=0,y=0,relwidth=1.0,relheight=1.0)
 
 
-actualizargithub()
+# actualizargithub()
 
 # etiqueta =  tkinter.Label(ventana, text= 'Bienvenido', bg = 'gray',  height=5 , width=40)  #Etiqueta de Entrada 
 # #etiqueta.grid(row = 0, column = 4) # Aparece la Linea Gris en toda la parte superior
@@ -375,16 +540,25 @@ botonregistro = tkinter.Button(ventana, text = 'Registro', command  = ventanareg
 #botonregistro.grid(row =2, column=2)
 botonregistro.place(x=203 , y=390)
 
+
 botonautentificacion = tkinter.Button(ventana, text = 'Autentificación', command = reconocimientof,padx=25, pady=56,font=('ALGERIAN 20 bold'))
 #botonautentificacion.pack()
 #botonautentificacion.grid(row =1, column=2)
 botonautentificacion.place(x=790, y=390)
 
+####################################################################################################
+botoniomt = tkinter.Button(ventana, text = 'IOMT \n usuarios no registrados', command = inicio ,padx=25, pady=50,font=('ALGERIAN 15 bold'))
+#botonautentificacion.pack()
+#botonautentificacion.grid(row =1, column=2)
+botoniomt.place(x=480, y=570)
 
-
-
+########################################################################################
 
 serialArduino = serial.Serial('/dev/ttyACM0',9600)
 
 
+
+
 ventana.mainloop()
+
+
